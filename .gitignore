@@ -1,7 +1,8 @@
 *.json
-*.txt
+discord.txt
 data
 .vscode
 dataset_Generation
 venv
 *.pem
+sys_dependencies.txt
