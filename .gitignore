@@ -1,0 +1,7 @@
+*.json
+*.txt
+data
+.vscode
+dataset_Generation
+venv
+*.pem
