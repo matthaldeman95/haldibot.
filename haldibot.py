@@ -24,7 +24,7 @@ client = Bot(description="haldibot.", command_prefix="-", pm_help = False)
 
 @client.event
 async def on_ready():
-	return await client.change_presence(game=discord.Game(name='LEARNING HOW TO UNDERSTAND HUMANS')) #This is buggy, let us know if it doesn't work.
+	return await client.change_presence(game=discord.Game(name='L E A R N I N G'))
 
 @client.command()
 async def echo(*args):
@@ -33,10 +33,13 @@ async def echo(*args):
 	await client.say(response)
 
 @client.command()
+async def add(left: int, right: int):
+	await client.say(left + right)
+
+@client.command()
 async def remind(*args):
 
 	request = "remind " + " ".join(args)
-	print(request)
 	result = engine.parse(request)
 	for s in result['slots']:
 		if s['slotName'] == 'intent':
@@ -51,7 +54,12 @@ async def remind(*args):
 	output_time = datetime.datetime.strftime(dt, output_string_format)
 
 	output_string = "I will remind me you to `{}` at `{}` (but not really, I haven't yet learned how)".format(intent, output_time)
-	await client.say(output_string)
+	return await client.say(output_string)
+
+@client.command(pass_context=True)
+async def hello(ctx):
+	message = "Hello, {}!  Have a nice day.".format(str(ctx.message.author).split('#')[0])
+	return await client.say(message)
 
 with open('discord.txt') as infile:
 	token = infile.read()
