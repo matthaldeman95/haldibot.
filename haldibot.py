@@ -3,6 +3,7 @@ import json
 import datetime
 import discord
 import asyncio
+from random import randint
 from builtins import input
 from snips_nlu import SnipsNLUEngine, load_resources
 from snips_nlu.default_configs import CONFIG_EN
@@ -22,6 +23,8 @@ engine.fit(dataset)
 
 client = Bot(description="haldibot.", command_prefix="-", pm_help = False)
 
+print("haldibot lives!")
+
 @client.event
 async def on_ready():
 	return await client.change_presence(game=discord.Game(name='L E A R N I N G'))
@@ -30,6 +33,7 @@ async def on_ready():
 async def echo(*args):
 
 	response = " ".join(args)
+	response = "no"
 	await client.say(response)
 
 @client.command()
@@ -60,6 +64,33 @@ async def remind(*args):
 async def hello(ctx):
 	message = "Hello, {}!  Have a nice day.".format(str(ctx.message.author).split('#')[0])
 	return await client.say(message)
+
+@client.command()
+async def eightball():
+	vals = [
+		'It is certain.',
+		'It is decidedly so',
+		'Without a doubt.',
+		'Yes - definitely',
+		'You may rely on it.',
+		'As I see it, yes.',
+		'Most likely',
+		'Outlook good.',
+		'Yes',
+		'Signs point to yes.',
+		'Reply hazy, try again.',
+		'Ask again later.',
+		'Better not tell you now.',
+		'Cannot predict now.',
+		'Concentrate and ask again.',
+		"Don't count on it.",
+		'My reply is no.',
+		'My sources say no.',
+		'Outlook not so good.',
+		'Very doubtful.'
+	]
+	val = vals[randint(0,len(vals) - 1)]
+	return await client.say(val)
 
 with open('discord.txt') as infile:
 	token = infile.read()
