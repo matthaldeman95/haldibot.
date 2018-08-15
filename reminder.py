@@ -9,6 +9,6 @@ def set_reminder(intent, reminder_time, user_id, channel_id):
     command = 'echo "python post.py {} \'{}\'" | at {}'.format(channel_id, message, timestring)
     print(command)
     os.system(command)
-    
+
 if __name__ == "__main__":
     set_reminder("to fix this bot", datetime.datetime.now() + datetime.timedelta(minutes=2))
