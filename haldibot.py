@@ -14,6 +14,7 @@ from snips_nlu.default_configs import CONFIG_EN
 from dateutil import parser
 import platform
 from reminder import set_reminder
+from weather import get_weather
 
 print("Loading NLU engine...")
 # Load up Snips engine
@@ -22,7 +23,7 @@ engine = SnipsNLUEngine(config=CONFIG_EN)
 #with io.open('data/dataset.json') as f:
 #    dataset = json.load(f)
 #engine.fit(dataset)
-engine = SnipsNLUEngine.from_path("data/engine")
+engine = SnipsNLUEngine.from_path("engine")
 
 client = Bot(description="haldibot.", command_prefix="-", pm_help = False)
 
@@ -49,6 +50,12 @@ async def add(left: int, right: int):
 @client.command()
 async def subtract(left: int, right: int):
 	await client.say(left - right)
+
+@client.command()
+async def weather(*args):
+	location = " ".join(args)
+	weather_data = get_weather(location)
+	return await client.say(weather_data)
 
 @client.command(pass_context=True)
 async def remind(ctx, *args):
