@@ -11,3 +11,4 @@ sys_dependencies.txt
 test.py
 supervisor_init.sh
 sys_dependencies.sh
+__pycache__
