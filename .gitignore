@@ -6,4 +6,8 @@ dataset_Generation
 venv
 *.pem
 sys_dependencies.txt
-post.py
+*.txt
+*.csv
+test.py
+supervisor_init.sh
+sys_dependencies.sh
