@@ -3,6 +3,7 @@ import json
 import datetime
 import discord
 import asyncio
+import pytz
 from random import randint
 from builtins import input
 from snips_nlu import SnipsNLUEngine, load_resources
@@ -12,6 +13,7 @@ from discord.ext import commands
 from snips_nlu import SnipsNLUEngine, load_resources
 from snips_nlu.default_configs import CONFIG_EN
 from dateutil import parser
+from datetime import timezone
 import platform
 from reminder import set_reminder
 from weather import get_weather
@@ -31,7 +33,7 @@ print("haldibot lives!")
 
 @client.event
 async def on_ready():
-	return await client.change_presence(game=discord.Game(name='with your heart'))
+	return await client.change_presence(game=discord.Game(name='with time zones'))
 
 @client.command()
 async def fuckyou(*args):
@@ -76,14 +78,15 @@ async def remind(ctx, *args):
 	if not dt_string:
 		return await client.say("I know what you want to be reminded of, but not what time to remind you.")
 	dt = parser.parse(dt_string)
+	new_dt = dt.astimezone(tz=None)
 	user_id = ctx.message.author.id
 	channel_id = ctx.message.channel.id
-	set_reminder(intent, dt, user_id, channel_id)
+	set_reminder(intent, new_dt, user_id, channel_id)
 	
 	output_string_format = "%I:%M %p on %a, %b %d"
 	output_time = datetime.datetime.strftime(dt, output_string_format)
 
-	output_string = "<@{}>, I will remind me you to `{}` at `{}`".format(user_id, intent, output_time)
+	output_string = "<@{}>, I will remind me you to `{}` at `{} UTC`".format(user_id, intent, output_time)
 	return await client.say(output_string)
 
 @client.command(pass_context=True)
