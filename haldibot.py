@@ -3,6 +3,7 @@ import boto3
 
 from random import randint
 
+import requests
 import discord
 from discord.ext import commands
 from discord_commands import get_message
@@ -109,5 +110,18 @@ async def eightball(ctx):
 	]
 	val = vals[randint(0,len(vals) - 1)]
 	await ctx.send(str(val))
+
+@bot.command()
+async def stonks(ctx):
+	token_secret_name = 'stockAPIKey'
+	stock_token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
+	stock_token_response_dict = json.loads(stock_token_response['SecretString'])
+	stock_token = stock_token_response_dict[token_secret_name]
+	url = "https://cloud.iexapis.com/stable/stock/work/quote?token=" + stock_token
+	response = requests.get(url).json()
+	price = response['latestPrice']
+	total = 2.51 * price
+	await ctx.send("$" + str(round(total, 2)))
+
 
 bot.run(discord_token)
