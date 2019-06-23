@@ -50,15 +50,12 @@ from discord_commands import get_message
 # 	return await client.say(output_string)
 
 
-secrets_client = boto3.client('secretsmanager')
+secrets_client = boto3.client('secretsmanager', region_name='us-east-1')
 
 token_secret_name = 'discordBotToken'
 token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
 token_response_dict = json.loads(token_response['SecretString'])
 discord_token = token_response_dict[token_secret_name]
-
-
-
 
 bot = commands.Bot(command_prefix='-', description="haldibot.")
 
@@ -79,7 +76,7 @@ async def ping(ctx):
 @bot.command()
 async def sentiment(ctx, *args):
 	message_text = await get_message(bot, ctx)
-	comprehend = boto3.client('comprehend')
+	comprehend = boto3.client('comprehend', region_name='us-east-1')
 	response = comprehend.detect_sentiment(Text=message_text, LanguageCode="en")
 	sentiment = response['Sentiment']
 	score = int(float(response['SentimentScore'][sentiment.title()]) * 100)
