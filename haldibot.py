@@ -76,7 +76,7 @@ async def ping(ctx):
 @bot.command()
 async def sentiment(ctx, *args):
 	message_text = await get_message(bot, ctx)
-	comprehend = boto3.client('comprehend')
+	comprehend = boto3.client('comprehend', region_name='us-west-2')
 	response = comprehend.detect_sentiment(Text=message_text, LanguageCode="en")
 	sentiment = response['Sentiment']
 	score = int(float(response['SentimentScore'][sentiment.title()]) * 100)
