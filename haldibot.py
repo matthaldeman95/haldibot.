@@ -1,101 +1,93 @@
-import io
 import json
-import datetime
-import discord
-import asyncio
-import pytz
+import boto3
+
 from random import randint
-from builtins import input
-from snips_nlu import SnipsNLUEngine, load_resources
-from snips_nlu.default_configs import CONFIG_EN
-from discord.ext.commands import Bot
+
+import discord
 from discord.ext import commands
-from snips_nlu import SnipsNLUEngine, load_resources
-from snips_nlu.default_configs import CONFIG_EN
-from dateutil import parser
-from datetime import timezone
-import platform
-from reminder import set_reminder
-from weather import get_weather
+from discord_commands import get_message
 
-print("Loading NLU engine...")
-# Load up Snips engine
-load_resources(u"en")
-engine = SnipsNLUEngine(config=CONFIG_EN)
-#with io.open('data/dataset.json') as f:
-#    dataset = json.load(f)
-#engine.fit(dataset)
-engine = SnipsNLUEngine.from_path("engine")
+# OLD
+# @client.event
+# async def on_ready():
+# 	return await client.change_presence(game=discord.Game(name='with time zones'))
 
-client = Bot(description="haldibot.", command_prefix="-", pm_help = False)
 
-print("haldibot lives!")
+# @client.command()
+# async def weather(*args):
+# 	location = " ".join(args)
+# 	weather_data = get_weather(location)
+# 	return await client.say(weather_data)
 
-@client.event
-async def on_ready():
-	return await client.change_presence(game=discord.Game(name='with time zones'))
+# @client.command(pass_context=True)
+# async def remind(ctx, *args):
 
-@client.command()
-async def fuckyou(*args):
-	response = "no fuck you"
-	await client.say(response)
-
-@client.command()
-async def echo(*args):
-	response = " ".join(args)
-	await client.say(response)
-
-@client.command()
-async def add(left: int, right: int):
-	await client.say(left + right)
-
-@client.command()
-async def subtract(left: int, right: int):
-	await client.say(left - right)
-
-@client.command()
-async def weather(*args):
-	location = " ".join(args)
-	weather_data = get_weather(location)
-	return await client.say(weather_data)
-
-@client.command(pass_context=True)
-async def remind(ctx, *args):
-
-	request = "remind " + " ".join(args)
-	result = engine.parse(request)
-	intent = None
-	dt_string = None
-	if not result['slots']:
-		return await client.say("I can't **** understand **** your accent ****")
-	for s in result['slots']:
-		if s['slotName'] == 'intent':
-			intent = s['value']['value']
-		if s['slotName'] == 'time':
-			dt_string = s['value']['value']
-	if not intent:
-		return await client.say("It isn't clear to me what to remind you about.")
-	if not dt_string:
-		return await client.say("I know what you want to be reminded of, but not what time to remind you.")
-	dt = parser.parse(dt_string)
-	new_dt = dt.astimezone(tz=None)
-	user_id = ctx.message.author.id
-	channel_id = ctx.message.channel.id
-	set_reminder(intent, new_dt, user_id, channel_id)
+# 	request = "remind " + " ".join(args)
+# 	result = engine.parse(request)
+# 	intent = None
+# 	dt_string = None
+# 	if not result['slots']:
+# 		return await client.say("I can't **** understand **** your accent ****")
+# 	for s in result['slots']:
+# 		if s['slotName'] == 'intent':
+# 			intent = s['value']['value']
+# 		if s['slotName'] == 'time':
+# 			dt_string = s['value']['value']
+# 	if not intent:
+# 		return await client.say("It isn't clear to me what to remind you about.")
+# 	if not dt_string:
+# 		return await client.say("I know what you want to be reminded of, but not what time to remind you.")
+# 	dt = parser.parse(dt_string)
+# 	new_dt = dt.astimezone(tz=None)
+# 	user_id = ctx.message.author.id
+# 	channel_id = ctx.message.channel.id
+# 	set_reminder(intent, new_dt, user_id, channel_id)
 	
-	output_string_format = "%I:%M %p on %a, %b %d"
-	output_time = datetime.datetime.strftime(dt, output_string_format)
+# 	output_string_format = "%I:%M %p on %a, %b %d"
+# 	output_time = datetime.datetime.strftime(dt, output_string_format)
 
-	output_string = "<@{}>, I will remind me you to `{}` at `{} UTC`".format(user_id, intent, output_time)
-	return await client.say(output_string)
+# 	output_string = "<@{}>, I will remind me you to `{}` at `{} UTC`".format(user_id, intent, output_time)
+# 	return await client.say(output_string)
 
-@client.command(pass_context=True)
+
+secrets_client = boto3.client('secretsmanager')
+
+token_secret_name = 'discordBotToken'
+token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
+token_response_dict = json.loads(token_response['SecretString'])
+discord_token = token_response_dict[token_secret_name]
+
+
+
+
+bot = commands.Bot(command_prefix='-', description="haldibot.")
+
+@bot.command()
+async def echo(ctx, *args):
+	response = " ".join(args)
+	await ctx.send(response)
+
+@bot.command()
 async def hello(ctx):
 	message = "Hello, <@{}>!  Have a nice day.".format(str(ctx.message.author.id))
-	return await client.say(message)
+	await ctx.send(message)
 
-@client.command()
-async def eightball():
+@bot.command()
+async def ping(ctx):
+    await ctx.send('pong')
+
+@bot.command()
+async def sentiment(ctx, *args):
+	message_text = await get_message(bot, ctx)
+	comprehend = boto3.client('comprehend')
+	response = comprehend.detect_sentiment(Text=message_text, LanguageCode="en")
+	sentiment = response['Sentiment']
+	score = int(float(response['SentimentScore'][sentiment.title()]) * 100)
+	sentiment_string = f"I am {score}% sure that your tone was {sentiment}"
+	await ctx.send(str(sentiment_string))
+
+@bot.command()
+async def eightball(ctx):
 	vals = [
 		'It is certain.',
 		'It is decidedly so',
@@ -119,8 +111,6 @@ async def eightball():
 		'Very doubtful.'
 	]
 	val = vals[randint(0,len(vals) - 1)]
-	return await client.say(val)
+	await ctx.send(str(val))
 
-with open('discord.txt') as infile:
-	token = infile.read()
-client.run(token)
+bot.run(discord_token)
