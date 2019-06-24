@@ -60,6 +60,23 @@ discord_token = token_response_dict[token_secret_name]
 
 bot = commands.Bot(command_prefix='-', description="haldibot.")
 
+@bot.event
+async def on_ready():
+
+	await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name='hooky'))
+
+@bot.command()
+async def status(ctx, *args):
+	status_switch = {
+		"playing": discord.ActivityType.playing,
+		"watching": discord.ActivityType.watching,
+		"listening": discord.ActivityType.listening,
+		"streaming": discord.ActivityType.streaming
+	}
+	selected_type = status_switch.get(args[0], discord.ActivityType.unknown)
+	selected_name = " ".join(args[1:])
+	await bot.change_presence(activity=discord.Activity(type=selected_type, name=selected_name))
+
 @bot.command()
 async def echo(ctx, *args):
 	response = " ".join(args)
