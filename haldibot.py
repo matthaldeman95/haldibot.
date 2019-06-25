@@ -129,16 +129,49 @@ async def eightball(ctx):
 	await ctx.send(str(val))
 
 @bot.command()
-async def stonks(ctx):
+async def stonks(ctx, *args):
 	token_secret_name = 'stockAPIKey'
 	stock_token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
 	stock_token_response_dict = json.loads(stock_token_response['SecretString'])
 	stock_token = stock_token_response_dict[token_secret_name]
-	url = "https://cloud.iexapis.com/stable/stock/work/quote?token=" + stock_token
-	response = requests.get(url).json()
+	# Default is Slack stock, if none is specified
+	# Otherwise, get the first four characters in the provided string
+	symbol = "work"
+	if args:
+		symbol = args[0][0:4]
+	url = f"https://cloud.iexapis.com/stable/stock/{symbol}/quote?token={stock_token}"
+	try:
+		response = requests.get(url).json()
+	except:
+		await ctx.send("Couldn't find that company.")
+		return
+	company = response['companyName']
+	company_symbol = response['symbol']
 	price = response['latestPrice']
-	total = 2.51 * price
-	await ctx.send("$" + str(round(total, 2)))
+	change = round(response['change'], 2)
+
+	color = discord.Colour.green() if change > 0 else discord.Colour.red()
+	# API gives a minus sign for negative change, but no plus for positive
+	# So determine which it was, and ensure we store the sign outside of the dollar sign
+	# in the final output
+	change_string = str(change)
+	sign = "+"
+	if "-" in change_string:
+		sign = "-"
+		change_string = change_string[1:]
+	change_percent = round(response['changePercent'], 2)
+
+
+
+	embed = discord.Embed(title="stonks!", color=color)
+	embed.add_field(name="Company Name", value=f"{company} ({company_symbol})", inline=False)
+	embed.add_field(name="Current Value", value=f"${price}", inline=True)
+	embed.add_field(name="Change", value=f"{sign}${change_string} ({change_percent}%)", inline=True)
+	if symbol == "work":
+		# Only do this if slack is specified - determines the value of 2.51 owned shares
+		total = round(2.51 * price, 2)
+		embed.add_field(name="Value of Your Shares", value=f"${total}", inline=False)
+	await ctx.send(embed=embed)
 
 
 bot.run(discord_token)
