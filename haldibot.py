@@ -1,3 +1,4 @@
+import sys
 import json
 import boto3
 
@@ -50,10 +51,10 @@ from discord_commands import get_message
 # 	output_string = "<@{}>, I will remind me you to `{}` at `{} UTC`".format(user_id, intent, output_time)
 # 	return await client.say(output_string)
 
-
 secrets_client = boto3.client('secretsmanager', region_name='us-west-2')
 
-token_secret_name = 'discordBotToken'
+# Use dev token if we're testing on windows machine
+token_secret_name = "discordBotTokenDev" if sys.platform == "win32" else "discordBotToken"
 token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
 token_response_dict = json.loads(token_response['SecretString'])
 discord_token = token_response_dict[token_secret_name]
