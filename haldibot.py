@@ -7,7 +7,7 @@ from random import randint
 import requests
 import discord
 from discord.ext import commands
-from discord_commands import get_message
+from discord_commands import get_message, get_attachment_url
 
 # OLD
 # @client.event
@@ -94,7 +94,7 @@ async def ping(ctx):
 
 @bot.command()
 async def sentiment(ctx, *args):
-	message_text = await get_message(bot, ctx)
+	message_text = await get_message(ctx)
 	comprehend = boto3.client('comprehend', region_name='us-west-2')
 	response = comprehend.detect_sentiment(Text=message_text, LanguageCode="en")
 	sentiment = response['Sentiment']
@@ -162,8 +162,6 @@ async def stonks(ctx, *args):
 		change_string = change_string[1:]
 	change_percent = round(response['changePercent'], 2)
 
-
-
 	embed = discord.Embed(title="stonks!", color=color)
 	embed.add_field(name="Company Name", value=f"{company} ({company_symbol})", inline=False)
 	embed.add_field(name="Current Value", value=f"${price}", inline=True)
@@ -173,6 +171,27 @@ async def stonks(ctx, *args):
 		total = round(2.51 * price, 2)
 		embed.add_field(name="Value of Your Shares", value=f"${total}", inline=False)
 	await ctx.send(embed=embed)
+
+@bot.command()
+async def image(ctx, *args):
+	image_url = await get_attachment_url(ctx)
+	if not image_url:
+		await ctx.send("No image found")
+		return
+
+	r = requests.get(image_url, stream=True)
+	if r.status_code == 200:
+		r.raw.decode_content = True
+		rekognition = boto3.client('rekognition', region_name='us-west-2')
+		result = rekognition.detect_labels(Image={'Bytes': r.raw.data}, MaxLabels=10)
+		labels = result['Labels']
+
+		embed = discord.Embed(title="Label Results:", color=discord.Colour.blue()) # TODO need better color
+		confidence_percent = lambda confidence : str(round(confidence, 2)) + "%"
+		for l in labels:
+			embed.add_field(name=l['Name'], value=confidence_percent(l['Confidence']), inline=False)
+		
+		await ctx.send(embed=embed)
 
 
 bot.run(discord_token)
