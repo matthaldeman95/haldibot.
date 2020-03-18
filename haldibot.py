@@ -3,11 +3,13 @@ import json
 import boto3
 
 from random import randint
+from pprint import pprint
 
 import requests
 import discord
 from discord.ext import commands
-from discord_commands import get_message, get_attachment_url
+from discord_commands import get_message, get_thumbnail_url, get_attachment_link
+from anagrams import recursiveAnagrams
 
 # OLD
 # @client.event
@@ -130,6 +132,34 @@ async def eightball(ctx):
 	await ctx.send(str(val))
 
 @bot.command()
+async def haldigram(ctx, *args):
+	# again this is sloppy and quick
+	word = ""
+	for a in args:
+		word += a
+	print(word)
+	results = recursiveAnagrams(word)
+	if not results:
+		await ctx.send("forgive me for i cannot find a haldigram of that")
+	elif len(results) >= 10:
+		await ctx.send(f"Got {len(results)} results, here's a few:  ")
+		randomSelected = []
+		for x in range(0, 9):
+			randomSelected.append(results[randint(0, len(results) - 1)])
+		message_string = "```" + "\n".join(randomSelected) + "```"
+		await ctx.send(message_string)
+	elif len(results) > 1:
+		await ctx.send(f"Got {len(results)} results:")
+		message_string = "\n".join(results)
+		await ctx.send(message_string)
+	elif len(results) == 1:
+		await ctx.send(results[0])
+	else:
+		await ctx.send("forgive me for i cannot find a haldigram of that")
+
+
+
+@bot.command()
 async def stonks(ctx, *args):
 	token_secret_name = 'stockAPIKey'
 	stock_token_response = secrets_client.get_secret_value(SecretId=token_secret_name)
@@ -174,7 +204,7 @@ async def stonks(ctx, *args):
 
 @bot.command()
 async def image(ctx, *args):
-	image_url = await get_attachment_url(ctx)
+	image_url = await get_thumbnail_url(ctx)
 	if not image_url:
 		await ctx.send("No image found")
 		return
@@ -193,5 +223,41 @@ async def image(ctx, *args):
 		
 		await ctx.send(embed=embed)
 
+# @bot.command()
+# async def article(ctx, *args):
+# 	article_url = await get_attachment_link(ctx)
+# 	if not article_url:
+# 		await ctx.send("No article found")
+# 		return
+# 	# Newspaper library stuff
+# 	# Experimental - i might just throw this away if it sucks
+# 	config = Config()
+# 	config.MAX_SUMMARY_SENT = 3
+# 	article = Article(url=article_url, config=config)
+# 	article.download()
+# 	article.parse()
+# 	article.nlp()
+# 	await ctx.send(article.summary)
 
+# @bot.command()
+# async def meme(ctx, *args):
+
+# 	image_url = await get_thumbnail_url(ctx)
+# 	if not image_url:
+# 		await ctx.send("No image found")
+# 		return
+
+# 	r = requests.get(image_url, stream=True)
+# 	r.raw.decode_content = True
+
+# 	upload_meme(r.raw, args)
+	
+	
+# @bot.command()
+# async def getmeme(ctx, *args):
+
+# 	key = "d98f59b1-ba84-4aae-9ea7-e32f79204b10"
+# 	result = await download_meme(key, ctx)
+
+	
 bot.run(discord_token)
